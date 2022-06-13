@@ -1,5 +1,8 @@
 package com.sms.aligo.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import javax.net.ssl.HttpsURLConnection;
@@ -18,10 +21,8 @@ public class aligoService {
             "\"tpl_code\":\"TI_8950\"," + "\"sender\":\"0220384330\"," +
             "\"receiver_1\":\"01091919263\"," + "\"subject_1\":\"아이쿠카 회원가입 안내\"," +
             "\"message_1\":\"#{셧왕뫄},#{SMS}\"," + "\"testMode\":\"Y\"," ;
-    public static void setConnection(String domain) {
-        log.info("START");
+    public static String setConnection(String domain) {
         try {
-            log.info("CONNECTION");
             URL url = new URL(domain);
 
             // set parameter
@@ -58,20 +59,35 @@ public class aligoService {
             String inputLine;
             String res = "";
             while((inputLine=in.readLine())!=null){
-                System.out.println(inputLine);
+//                System.out.println(inputLine);
                 res = inputLine;
              }
-            log.info(res);
              in.close();
-
+            return res;
         } catch (Exception e) {
             System.out.println("Exception");
         }
+        return null;
 }
-
-    public static void sendAlimtalk () {
-        log.info("ENTER");
+    public static JsonNode getReturnNode(String res) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(res);
+        return node;
+    }
+    public static void sendAlimtalk () throws JsonProcessingException {
         String url = "https://kakaoapi.aligo.in/akv10/alimtalk/send/";
-        setConnection(url);
+        String res = setConnection(url);
+        JsonNode node = getReturnNode(res);
+        if (node.get("code").toString().toString().equals("0")) {
+            String type = node.get("info").get("type").toString();
+            String current = node.get("info").get("current").toString();
+            String unit = node.get("info").get("unit").toString();
+            String total = node.get("info").get("total").toString();
+            log.info("type :{}, current :{}, unit :{}, total :{}", type, current, unit, total);
+        }
+        else{
+            log.info("Failed");
+        }
+
     }
 }

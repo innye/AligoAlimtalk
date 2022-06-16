@@ -34,7 +34,6 @@ hs_err_pid*
 out
 gen
 build
-rebel.xml
 
 # Compliled files
 /target/

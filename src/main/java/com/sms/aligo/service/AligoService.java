@@ -3,6 +3,10 @@ package com.sms.aligo.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sms.aligo.AligoTemplateDto;
+import com.sms.aligo.entity.AligoTemplate;
+import com.sms.aligo.repository.AligoRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import javax.net.ssl.HttpsURLConnection;
@@ -12,18 +16,51 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
+
 @Slf4j
 @Service
-public class aligoService {
-    String data = "\"apikey\":\"aker151ukxd9a3wb7dk7ltuprci8w406\"," +
-            "\"userid\":\"happytoseeyou\",\"token\":\"a5a85ad199749aadb1693523a56a355b91192631e4e8fdcc4020855eb4e0f87281563af1ad0a5cbe64c04520a990020eb697c161117079336346dc2d14a992c7nluCzpvw0fdAr+QLy6KuceqgLmyVzYM61yFM8YhS7eGymx9KrrfGrU88CK6PhpcZvzQmmK8HYrWfkmSkpD8e8w==\","
-            + "\"senderkey\":\"ffbd40a00d729a352aa50e9d1be045630d83456d\"," +
-            "\"tpl_code\":\"TI_8950\"," + "\"sender\":\"0220384330\"," +
-            "\"receiver_1\":\"01091919263\"," + "\"subject_1\":\"아이쿠카 회원가입 안내\"," +
-            "\"message_1\":\"#{셧왕뫄},#{SMS}\"," + "\"testMode\":\"Y\"," ;
-    public static String setConnection(String domain) {
+@RequiredArgsConstructor
+public class AligoService {
+    private final AligoRepository aligoRepository;
+
+    public String setMessage(String name, String type, String link){
+        if (type.equals("invitation")){
+            Optional <AligoTemplate> tp = aligoRepository.findById(1L);
+            String template = null;
+            if (tp.isEmpty()){
+                template = "[아이쿠카] #{송신자} 님의 아이쿠카 초대\\n❤︎용돈을 주고 받는 아이쿠카 초대장❤︎이 도착했습니다.\\n(유효기간: 2주)\\n\\n[ 아이쿠카 가입하기 ]\\n#{링크}";
+            }
+            else{
+               template = tp.get().getMessage();
+            }
+            template = template.replace("#{송신자}",name);
+            template = template.replace("#{링크}",link);
+            System.out.println(template);
+            return template;
+        }
+        else if (type.equals("agreement")){
+            Optional <AligoTemplate> tp = aligoRepository.findById(2L);
+            String template = null;
+            if (tp.isEmpty()){
+                template = "[아이쿠카] #{만14세미만자녀} 님의 법정대리인(보호자) 동의 요청\\n아이쿠카는 만 14세 미만 이용자 가입에 법정대리인(보호자)의 동의가 필요합니다.\\n(유효시간 : 5분)\\n\\n[ 동의하러 가기 ]\\n#{링크}";
+            }
+            else{
+                template = tp.get().getMessage();
+            }
+            template = template.replace("#{만14세미만자녀}",name);
+            template = template.replace("#{링크}",link);
+            System.out.println(template);
+            return template;
+        }
+        return null;
+    }
+    public String setConnection(String domain, AligoTemplateDto dto) {
         try {
             URL url = new URL(domain);
+
+            // set message
+            String msg = setMessage(dto.getName(), dto.getType(), dto.getLink());
 
             // set parameter
             Map<String,Object> params = new LinkedHashMap<>();
@@ -31,11 +68,11 @@ public class aligoService {
             params.put("userid","happytoseeyou");
             params.put("token","a5a85ad199749aadb1693523a56a355b91192631e4e8fdcc4020855eb4e0f87281563af1ad0a5cbe64c04520a990020eb697c161117079336346dc2d14a992c7nluCzpvw0fdAr+QLy6KuceqgLmyVzYM61yFM8YhS7eGymx9KrrfGrU88CK6PhpcZvzQmmK8HYrWfkmSkpD8e8w==");
             params.put("senderkey","ffbd40a00d729a352aa50e9d1be045630d83456d");
-            params.put("tpl_code","TI_8950");
+            params.put("tpl_code","TJ_0012"); // 법정대리인 동의요청
             params.put("sender","0220384330");
-            params.put("receiver_1","01091919263");
-            params.put("subject_1","아이쿠카 회원가입 안내");
-            params.put("message_1","#{셧왕뫄},#{SMS}");
+            params.put("receiver_1",dto.getReceiver());
+            params.put("subject_1","아이쿠카");
+            params.put("message_1",msg);
             params.put("testMode","Y");
 
             StringBuilder postData = new StringBuilder();
@@ -54,12 +91,12 @@ public class aligoService {
             http.setRequestProperty("Content-Length",String.valueOf(postDataBytes.length));
             http.setDoOutput(true);
             http.getOutputStream().write(postDataBytes);
-
+            log.info("Post Data:{}", postData);
             BufferedReader in = new BufferedReader(new InputStreamReader(http.getInputStream(), "UTF-8"));
             String inputLine;
             String res = "";
             while((inputLine=in.readLine())!=null){
-//                System.out.println(inputLine);
+                System.out.println(inputLine);
                 res = inputLine;
              }
              in.close();
@@ -69,14 +106,14 @@ public class aligoService {
         }
         return null;
 }
-    public static JsonNode getReturnNode(String res) throws JsonProcessingException {
+    public JsonNode getReturnNode(String res) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(res);
         return node;
     }
-    public static void sendAlimtalk () throws JsonProcessingException {
+    public void sendAlimtalk (AligoTemplateDto dto) throws JsonProcessingException {
         String url = "https://kakaoapi.aligo.in/akv10/alimtalk/send/";
-        String res = setConnection(url);
+        String res = setConnection(url,dto);
         JsonNode node = getReturnNode(res);
         if (node.get("code").toString().toString().equals("0")) {
             String type = node.get("info").get("type").toString();
@@ -85,9 +122,8 @@ public class aligoService {
             String total = node.get("info").get("total").toString();
             log.info("type :{}, current :{}, unit :{}, total :{}", type, current, unit, total);
         }
-        else{
+        else {
             log.info("Failed");
         }
-
     }
 }

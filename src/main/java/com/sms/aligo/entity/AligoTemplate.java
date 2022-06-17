@@ -14,6 +14,10 @@ public class AligoTemplate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column
+    private String code;
+    @Column
+    private String tag;
+    @Column
     private String name;
     @Column
     private String message;

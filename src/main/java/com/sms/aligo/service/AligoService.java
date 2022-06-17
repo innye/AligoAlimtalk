@@ -14,16 +14,13 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AligoService {
     private final AligoRepository aligoRepository;
-
     public String setMessage(String name, String type, String link){
         if (type.equals("invitation")){
             Optional <AligoTemplate> tp = aligoRepository.findById(1L);
@@ -68,8 +65,9 @@ public class AligoService {
             params.put("userid","happytoseeyou");
             params.put("token","a5a85ad199749aadb1693523a56a355b91192631e4e8fdcc4020855eb4e0f87281563af1ad0a5cbe64c04520a990020eb697c161117079336346dc2d14a992c7nluCzpvw0fdAr+QLy6KuceqgLmyVzYM61yFM8YhS7eGymx9KrrfGrU88CK6PhpcZvzQmmK8HYrWfkmSkpD8e8w==");
             params.put("senderkey","ffbd40a00d729a352aa50e9d1be045630d83456d");
-            params.put("tpl_code","TJ_0012"); // 법정대리인 동의요청
-            params.put("sender","0220384330");
+
+            params.put("tpl_code",aligoRepository.findTemplateNumByType(dto.getType()));
+            params.put("sender",dto.getSender());
             params.put("receiver_1",dto.getReceiver());
             params.put("subject_1","아이쿠카");
             params.put("message_1",msg);

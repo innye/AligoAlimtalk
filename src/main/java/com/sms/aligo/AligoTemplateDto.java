@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AligoTemplateDto {
+    private String sender;
     private String receiver;
     private String name;
     private String type;

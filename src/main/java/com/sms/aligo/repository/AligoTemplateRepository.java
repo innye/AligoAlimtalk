@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AligoRepository extends JpaRepository<AligoTemplate, Long> {
+public interface AligoTemplateRepository extends JpaRepository<AligoTemplate, Long> {
     @Query(value = "select m.code from aligotemplate m where m.tag= :tag", nativeQuery = true)
     String findTemplateNumByType(@Param("tag") String tag);
 }

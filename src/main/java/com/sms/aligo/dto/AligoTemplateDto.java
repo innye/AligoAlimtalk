@@ -1,9 +1,11 @@
-package com.sms.aligo;
+package com.sms.aligo.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import javax.persistence.Table;
 
 @Getter
 @Builder

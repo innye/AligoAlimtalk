@@ -16,10 +16,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
+
+import com.sms.aligo.SetTime.*;
 
 @Slf4j
 @Component
@@ -28,13 +28,14 @@ import java.util.Optional;
 public class Scheduler {
     private final AligoTemplateRepository aligoTemplateRepository;
     private final AligoMessageRepository aligoMessageRepository;
-
     private String domain = "https://kakaoapi.aligo.in/akv10/alimtalk/send/";
 
     /**
      * Cron 표현식을 사용한 작업 예약
      * 초(0-59) 분(0-59) 시간(0-23) 일(1-31) 월(1-12) 요일(0-7)
      */
+
+    // 알리고 알림톡 전송 : 초대장, 법정 대리인 요청
     @Scheduled(cron = "5 * * * * ?")
     public void sendMessage() throws JsonProcessingException {
 
@@ -57,7 +58,7 @@ public class Scheduler {
                 String unit = node.get("info").get("unit").toString();
                 String total = node.get("info").get("total").toString();
                 log.info("type :{}, current :{}, unit :{}, total :{}", type, current, unit, total);
-                aligoMessageRepository.updateMessageStateById("REQUEST",t.getId());
+                aligoMessageRepository.updateMessageStateById("REQUEST",SetTime.setTime(),t.getId());
             }
             else {
                 log.info("Failed");
@@ -77,7 +78,7 @@ public class Scheduler {
     }
 
     public String setAgreementMessage(AligoMessage a){
-        Optional<AligoTemplate> tm = aligoTemplateRepository.findById(1L);
+        Optional<AligoTemplate> tm = aligoTemplateRepository.findById(2L);
         String ms = null;
         if (!tm.isEmpty()) {ms = tm.get().getMessage();}
         else { ms = "[아이쿠카] #{만14세미만자녀} 님의 법정대리인(보호자) 동의 요청\n아이쿠카는 만 14세 미만 이용자 가입에 법정대리인(보호자)의 동의가 필요합니다.\n(유효시간 : 5분)\n\n[ 동의하러 가기 ]\n#{링크}";}
@@ -139,4 +140,16 @@ public class Scheduler {
         JsonNode node = mapper.readTree(res);
         return node;
     }
+
+
+    // 유효기간 만료 처리 : 법정 대리인 요청
+//    @Scheduled(cron = "15 * * * * ?")
+//    public void checkAgreementValidation(){
+//        List <AligoMessage> am = aligoMessageRepository.findMessageByState("REQUEST");
+//        for (AligoMessage t: am) {
+//            (SetTime.setTime() - t.getCreated_at()) > 5 :
+//
+//        }
+//    }
+
 }

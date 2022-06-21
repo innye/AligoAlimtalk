@@ -1,22 +1,20 @@
 package com.sms.aligo.service;
 import java.time.LocalDateTime;
+
+import com.sms.aligo.SetTime;
 import com.sms.aligo.dto.AligoMessageDto;
 import com.sms.aligo.entity.AligoMessage;
 import com.sms.aligo.repository.AligoMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.sms.aligo.SetTime.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AligoService {
     private final AligoMessageRepository messageRepository;
-
-    public LocalDateTime setTime(){
-        LocalDateTime dateAndtime = LocalDateTime.now();
-        return dateAndtime;
-    }
 
     public void setAlimtalk (AligoMessageDto dto){
         AligoMessage entity = AligoMessage.builder()
@@ -27,8 +25,8 @@ public class AligoService {
                 .receiver_name(dto.getReceiver_name())
                 .receiver_num(dto.getReceiver_num())
                 .url(dto.getUrl())
-                .created_at(setTime())
-                .updated_on(setTime())
+                .created_at(SetTime.setTime())
+                .updated_on(SetTime.setTime())
                 .build();
         messageRepository.save(entity);
     }

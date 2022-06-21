@@ -7,6 +7,7 @@ import com.sms.aligo.entity.AligoTemplate;
 import com.sms.aligo.repository.AligoMessageRepository;
 import com.sms.aligo.repository.AligoTemplateRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.jni.Local;
 import  org.springframework.scheduling.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -36,11 +38,10 @@ public class Scheduler {
      */
 
     // 알리고 알림톡 전송 : 초대장, 법정 대리인 요청
-    @Scheduled(cron = "5 * * * * ?")
+    @Scheduled(cron = "*/5 * * * * ?")
     public void sendMessage() throws JsonProcessingException {
-
+        log.info("SEND MESSAGE");
         // set Message
-        log.info("schedule tasks using cron jobs - {}");
         List <AligoMessage> am = aligoMessageRepository.findMessageByState("WAIT");
         String res = null;
         for (AligoMessage t: am) {
@@ -61,7 +62,7 @@ public class Scheduler {
                 aligoMessageRepository.updateMessageStateById("REQUEST",SetTime.setTime(),t.getId());
             }
             else {
-                log.info("Failed");
+                log.info("FAILED SENDING MESSAGE");
             }
         }
 
@@ -143,13 +144,29 @@ public class Scheduler {
 
 
     // 유효기간 만료 처리 : 법정 대리인 요청
-//    @Scheduled(cron = "15 * * * * ?")
-//    public void checkAgreementValidation(){
-//        List <AligoMessage> am = aligoMessageRepository.findMessageByState("REQUEST");
-//        for (AligoMessage t: am) {
-//            (SetTime.setTime() - t.getCreated_at()) > 5 :
-//
-//        }
-//    }
+    @Scheduled(cron = "*/15 * * * * ?")
+    public void checkAgreementValidation(){
+        log.info("CHECK VALIDATION");
+        List <AligoMessage> am = aligoMessageRepository.findMessageByState("REQUEST");
+        LocalDateTime createdAt = null;
+        LocalDateTime expiredAt = null;
+        for (AligoMessage t: am) {
+            createdAt = t.getCreated_at();
+            if (t.getTag().equals("invitation")) {
+                expiredAt = createdAt.plusDays(14);
+                if (SetTime.setTime().isAfter(expiredAt)) {
+                    log.info("Created : {}, Expired : {}", createdAt, expiredAt);
+                    aligoMessageRepository.updateMessageStateById("EXPIRED", SetTime.setTime(), t.getId());
+                }
+            }
+            else if (t.getTag().equals("agreement")){
+                expiredAt = createdAt.plusMinutes(5);
+                if (SetTime.setTime().isAfter(expiredAt)) {
+                    log.info("Created : {}, Expired : {}", createdAt, expiredAt);
+                    aligoMessageRepository.updateMessageStateById("EXPIRED", SetTime.setTime(), t.getId());
+                }
+            }
+        }
+    }
 
 }

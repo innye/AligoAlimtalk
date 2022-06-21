@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -16,6 +17,6 @@ public interface AligoMessageRepository extends JpaRepository<AligoMessage, Long
 
     @Transactional
     @Modifying
-    @Query(value = "UPDATE aligomessage m SET m.state=:state WHERE m.id =:id", nativeQuery = true)
-    void updateMessageStateById(@Param("state") String state, @Param("id") Long id);
+    @Query(value = "UPDATE aligomessage m SET m.state=:state, m.updated_on=:time WHERE m.id =:id", nativeQuery = true)
+    void updateMessageStateById(@Param("state") String state, @Param("time") LocalDateTime time, @Param("id") Long id);
 }
